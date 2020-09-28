@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OldWestRPClient.Utilities;
+using System.Data;
 
 namespace TS_Trains
 {
@@ -177,8 +178,21 @@ namespace TS_Trains
 
         public static int tramTrainHandle = 0;
 
+        static TrainRoute AustinTrainRoute = new TrainRoute(new List<Vector4>(){
+            new Vector4(-3749.387f, -2628.224f, -13.829f, 180.0f),
+            new Vector4(-3748.965f, -2557.377f, -13.744f, 10.0f),
+            new Vector4(-2508.717f, -2404.261f, 60.246f, 9.598f),
+            new Vector4(-2489.341f, -2457.934f, 60.198f, 202.690f),
+            new Vector4(-5238.310f, -3448.962f, -21.491f, 10.951f),
+            new Vector4(-5237.590f, -3499.400f, -21.098f, 162.604f)
+        }, new List<TrackSwitch>()
+        {
+            new TrackSwitch(new Vector4(-2174.342f, -2508.351f, 64.79848f, 131.155f), -988268728, 1, 1),
+            new TrackSwitch(new Vector4(-4916.622f, -3009.565f, -19.15694f, 69.832f), -1467515357, 0, 0),
+            new TrackSwitch(new Vector4(-4916.622f, -3009.565f, -19.15694f, 210.0f), -1467515357, 0, 1)
+        }, 10.0, new Vector3(-3749.241f, -2715.356f, -14.183f), TrainModels.Train4, 20);
 
-
+        public static int austinTrainHandle = 0;
 
         static async Task ValTrainTick()
         {
@@ -313,24 +327,73 @@ namespace TS_Trains
 
         }
 
+        static async Task AustinTrainTick()
+        {
+            try
+            {
+                if (API.NetworkIsHost())
+                {
+                    TrainRoute tr = AustinTrainRoute;
+                    if (!API.DoesEntityExist(austinTrainHandle))
+                    {
+                        Log.Info("Creating New Austin Train");
+                        austinTrainHandle = await TrainVehicle.Create(tr.Model, tr.TrainSpawn, tr.Npcs);
+
+                        BaseScript.TriggerServerEvent("Trains.Update", API.VehToNet(valTrainHandle), API.VehToNet(bigTrainHandle), API.VehToNet(tramTrainHandle), API.VehToNet(austinTrainHandle));
+                    }
+                    else
+                    {
+                        /* Since the New Austin train travels in both directions on the same track, with different stops and switches each way, the train's heading must be compared to the heading of the stop/switch. */
+                        float heading = Function.Call<float>((Hash)0xC230DD956E2F5507, austinTrainHandle);
+
+                        TrackSwitch nextSwitch = tr.Switches.OrderBy(o => Distance.EntityDistanceToSquared(austinTrainHandle, new Vector3(o.switchLoc.X, o.switchLoc.Y, o.switchLoc.Z))).ThenBy(o => Math.Abs(heading - o.switchLoc.W)).First();
+                        if (Distance.EntityDistanceToSquared(austinTrainHandle, new Vector3(nextSwitch.switchLoc.X, nextSwitch.switchLoc.Y, nextSwitch.switchLoc.Z)) < 200f)
+                        {
+                            Function.Call((Hash)0xE6C5E2125EB210C1, nextSwitch.switchId, nextSwitch.switchState1, nextSwitch.switchState2);
+                            Function.Call((Hash)0x3ABFA128F5BF5A70, nextSwitch.switchId, nextSwitch.switchState1, nextSwitch.switchState2);
+                        }
+                        Vector4 nextStop = tr.Stops.OrderBy(o => Math.Abs(heading - o.W)).ThenBy(o => Distance.EntityDistanceToSquared(austinTrainHandle, new Vector3(o.X, o.Y, o.Z))).First();
+                        if (Distance.EntityDistanceToSquared(austinTrainHandle, new Vector3(nextStop.X, nextStop.Y, nextStop.Z)) < 10f)
+                        {
+                            API.SetTrainCruiseSpeed(austinTrainHandle, 0f);
+                            await BaseScript.Delay(tr.Cooldown * 1000);
+                            API.SetTrainCruiseSpeed(austinTrainHandle, (float)tr.CruiseSpeed);
+                        }
+                    }
+                }
+                else
+                {
+                    await BaseScript.Delay(60000);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.Message);
+            }
+            await BaseScript.Delay(1000);
+            await Task.FromResult(0);
+
+        }
 
         static public void Init()
         {
-            Client.GetInstance().RegisterEventHandler("Trains.RequestCallback", new Action<int, int, int>(TrainRequestHandler));
+            Client.GetInstance().RegisterEventHandler("Trains.RequestCallback", new Action<int, int, int, int>(TrainRequestHandler));
             BaseScript.TriggerServerEvent("Trains.Request");
         }
 
-        private static void TrainRequestHandler(int tVal, int tBig, int tTram)
+        private static void TrainRequestHandler(int tVal, int tBig, int tTram, int tAustin)
         {
             try
             {
                 valTrainHandle = API.NetToVeh(tVal);
                 bigTrainHandle = API.NetToVeh(tBig);
                 tramTrainHandle = API.NetToVeh(tTram);
+                austinTrainHandle = API.NetToVeh(tAustin);
 
                 Client.GetInstance().RegisterTickHandler(ValTrainTick);
                 Client.GetInstance().RegisterTickHandler(BigTrainTick);
                 Client.GetInstance().RegisterTickHandler(TramTrainTick);
+                Client.GetInstance().RegisterTickHandler(AustinTrainTick);
             }
             catch (Exception e)
             {

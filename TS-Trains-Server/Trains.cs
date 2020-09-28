@@ -12,22 +12,24 @@ namespace TS_Trains_Server
         private static int valTrain = 0;
         private static int bigTrain = 0;
         private static int tramTrain = 0;
+        private static int austinTrain = 0;
         public static void Init()
         {
-            Server.GetInstance().RegisterEventHandler("Trains.Update", new Action<Player, int, int, int>(SetTrainHandles));
+            Server.GetInstance().RegisterEventHandler("Trains.Update", new Action<Player, int, int, int, int>(SetTrainHandles));
             Server.GetInstance().RegisterEventHandler("Trains.Request", new Action<Player>(ReqTrainHandles));
         }
 
-        private static void SetTrainHandles([FromSource] Player p, int t1, int t2, int t3)
+        private static void SetTrainHandles([FromSource] Player p, int t1, int t2, int t3, int t4)
         {
             valTrain = t1;
             bigTrain = t2;
             tramTrain = t3;
+            austinTrain = t4;
         }
 
         private static void ReqTrainHandles([FromSource] Player p)
         {
-            p.TriggerEvent("Trains.RequestCallback", valTrain, bigTrain, tramTrain);
+            p.TriggerEvent("Trains.RequestCallback", valTrain, bigTrain, tramTrain, austinTrain);
         }
     }
 }
