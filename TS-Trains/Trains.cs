@@ -205,7 +205,7 @@ namespace TS_Trains
                     {
                         Log.Info("Creating Val Train");
                         valTrainHandle = await TrainVehicle.Create(tr.Model, tr.TrainSpawn, tr.Npcs);
-                        BaseScript.TriggerServerEvent("Trains.Update", API.VehToNet(valTrainHandle), API.VehToNet(bigTrainHandle), API.VehToNet(tramTrainHandle));
+                        BaseScript.TriggerServerEvent("Trains.Update", API.VehToNet(valTrainHandle), API.VehToNet(bigTrainHandle), API.VehToNet(tramTrainHandle), API.VehToNet(austinTrainHandle));
                     }
                     else
                     {
@@ -250,7 +250,7 @@ namespace TS_Trains
                         Log.Info("Creating Big Train");
                         bigTrainHandle = await TrainVehicle.Create(tr.Model, tr.TrainSpawn, tr.Npcs);
 
-                        BaseScript.TriggerServerEvent("Trains.Update", API.VehToNet(valTrainHandle), API.VehToNet(bigTrainHandle), API.VehToNet(tramTrainHandle));
+                        BaseScript.TriggerServerEvent("Trains.Update", API.VehToNet(valTrainHandle), API.VehToNet(bigTrainHandle), API.VehToNet(tramTrainHandle), API.VehToNet(austinTrainHandle));
                     }
                     else
                     {
@@ -294,7 +294,7 @@ namespace TS_Trains
                     {
                         Log.Info("Creating Tram");
                         tramTrainHandle = await TrainVehicle.Create(tr.Model, tr.TrainSpawn, tr.Npcs);
-                        BaseScript.TriggerServerEvent("Trains.Update", API.VehToNet(valTrainHandle), API.VehToNet(bigTrainHandle), API.VehToNet(tramTrainHandle));
+                        BaseScript.TriggerServerEvent("Trains.Update", API.VehToNet(valTrainHandle), API.VehToNet(bigTrainHandle), API.VehToNet(tramTrainHandle), API.VehToNet(austinTrainHandle));
                     }
                     else
                     {
